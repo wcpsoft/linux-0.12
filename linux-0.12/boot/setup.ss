@@ -1,7 +1,3 @@
-# 1 "boot/setup.ss"
-# 1 "<built-in>"
-# 1 "<command-line>"
-# 1 "boot/setup.ss"
 !
 !	setup.s		(C) 1991 Linus Torvalds
 !
@@ -25,62 +21,11 @@
 
 ! NOTE! These had better be the same as in bootsect.s!
 ; 以下这些参数最好和bootsect.s中的相同！
-
-# 1 "include/linux/config.h" 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-# 54 "include/linux/config.h"
-
-
-# 67 "include/linux/config.h"
-
-
-# 79 "include/linux/config.h"
-
-# 88 "include/linux/config.h"
-
-# 25 "boot/setup.ss" 2
-; config.h中定义了0x9000 = 0x9000，0x1000 = 0x1000，0x9020 = 0x9020。
-INITSEG  = 0x9000	! we move boot here - out of the way
-SYSSEG   = 0x1000	! system loaded at 0x10000 (65536).
-SETUPSEG = 0x9020	! this is the current segment
+#include <linux/config.h>
+; config.h中定义了DEF_INITSEG = 0x9000，DEF_SYSSEG = 0x1000，DEF_SETUPSEG = 0x9020。
+INITSEG  = DEF_INITSEG	! we move boot here - out of the way
+SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
+SETUPSEG = DEF_SETUPSEG	! this is the current segment
 
 .globl begtext, begdata, begbss, endtext, enddata, endbss
 .text

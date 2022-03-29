@@ -1,68 +1,13 @@
-# 1 "boot/bootsect.ss"
-# 1 "<built-in>"
-# 1 "<command-line>"
-# 1 "boot/bootsect.ss"
 ! SYS_SIZE is the number of clicks (16 bytes) to be loaded.
 ! 0x3000 is 0x30000 bytes = 196kB, more than enough for current
-! versions of 1
+! versions of linux
 ; SYS_SIZE是要加载的系统模块长度的节数（每节有16b）。0x3000节就等
 ; 于0x30000bytes=192KB，对于当前的版本空间已足够了。
 
 ; 该头文件里定义了内核用到的一些常数符号和Linus自己使用的默认硬盘默认参数块。
+#include <linux/config.h>
 
-# 1 "include/linux/config.h" 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-# 54 "include/linux/config.h"
-
-
-# 67 "include/linux/config.h"
-
-
-# 79 "include/linux/config.h"
-
-# 88 "include/linux/config.h"
-
-# 9 "boot/bootsect.ss" 2
-
-SYSSIZE = 0x3000 	; 系统模块大小为0x3000节
+SYSSIZE = DEF_SYSSIZE 	; 系统模块大小为0x3000节
 
 !
 !	bootsect.s (C) 1991 Linus Torvalds
@@ -110,11 +55,11 @@ SETUPLEN = 4					! nr of setup-sectors
                                 ; setup 占用的磁盘扇区数
 BOOTSEG  = 0x07c0				! original address of boot-sector
                                 ; bootsect 代码所在的原地址（被BIOS子程序加载至此处）
-INITSEG  = 0x9000			! we move boot here - out of the way
+INITSEG  = DEF_INITSEG			! we move boot here - out of the way
                                 ; bootsect将要移动到的目的段位置，为了避开系统模块占用处
-SETUPSEG = 0x9020			! setup starts here
+SETUPSEG = DEF_SETUPSEG			! setup starts here
                                 ; setup程序代码的段位置
-SYSSEG   = 0x1000			! system loaded at 0x10000 (65536).
+SYSSEG   = DEF_SYSSEG			! system loaded at 0x10000 (65536).
                                 ; system模块将被加载到0x10000
 ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
                                 ; 停止加载的段地址
@@ -153,10 +98,34 @@ go:	mov	ax,cs
 
     mov	ss,ax		! put stack at 0x9ff00 - 12.
     mov	sp,dx
-
-# 117 "boot/bootsect.ss"
-
-# 129 "boot/bootsect.ss"
+/*
+ *	Many BIOS's default disk parameter tables will not
+ *	recognize multi-sector reads beyond the maximum sector number
+ *	specified in the default diskette parameter tables - this may
+ *	mean 7 sectors in some cases.
+ *
+ *	Since single sector reads are slow and out of the question,
+ *	we must take care of this by creating new parameter tables
+ *	(for the first disk) in RAM.  We will set the maximum sector
+ *	count to 18 - the most we will encounter on an HD 1.44.
+ *
+ *	High doesn't hurt.  Low does.
+ *
+ *	Segments are as follows: ds=es=ss=cs - INITSEG,
+ *		fs = 0, gs = parameter table segment
+ */
+/*
+ * 对于多扇区读操作所读的扇区数超过默认磁盘参数表中指定的最大扇区数时，很多BIOS
+ * 将不能进行正确识别。在某些情况下是7个扇区。
+ *
+ * 由于单扇区读操作太慢，不予考虑。我们必须通过在内存中重新创建新的参数表(为第1个驱动器)
+ * 来解决这个问题。我们将把其中最大扇区数设置为18，即在1.44MB磁盘上会碰到的最大值。
+ *
+ * 数值大不会出问题，但太小就不行了。
+ *
+ * 段寄存器将被设置成：ds = es = ss = cs 都为INITSEG(0x9000),
+ * fs = 0, gs = 参数表所在段值。
+ */
 
 ;;;;; 修改软驱参数表 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; BIOS中断0x1e的中断向量值是软驱参数表地址。该向量值位于内存0x1e*4=0x78处。这段代码首先从内
@@ -400,8 +369,18 @@ bad_rt:
     popa
     jmp read_track
 
-
-# 384 "boot/bootsect.ss"
+/*
+ *	print_all is for debugging purposes.
+ *	It will print out all of the registers.  The assumption is that this is
+ *	called from a routine, with a stack frame like
+ *	dx
+ *	cx
+ *	bx
+ *	ax
+ *	error
+ *	ret <- sp
+ *
+*/
 ; print_all 用于调试目的，前提是从一个子程序中调用。栈帧结构如上所示
 print_all:
     mov	cx, #5          ! error code + 4 registers
@@ -438,11 +417,11 @@ print_nl:
     int 	0x10
     ret
 
-
-
-
-
-
+/*
+ *	print_hex is for debugging purposes, and prints the word
+ *	pointed to by ss:bp in hexadecmial.
+*/
+/* 子程序print_hex用于调试目的.它使用十六进制在屏幕上显示出ss:bp指向的字 */
 print_hex:
     mov	cx, #4      ! 4 hex digits
     mov	dx, (bp)    ! load word into dx
@@ -463,11 +442,11 @@ good_digit:
     loop	print_digit
     ret
 
-
-
-
-
-
+/*
+ * This procedure turns off the floppy drive motor, so
+ * that we enter the kernel in a known state, and
+ * don't have to worry about it later.					'
+ */
 ; 这个子程序用于关闭软驱的马达，这样我们进入内核后它处于已知状态，以后也就无须担心它了。
 kill_motor:
     push dx

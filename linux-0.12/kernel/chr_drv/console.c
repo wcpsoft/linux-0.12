@@ -829,7 +829,7 @@ void con_write(struct tty_struct * tty)
  * else. If you want the screen to clear, call tty_write with
  * the appropriate escape-sequece.
  *
- * Reads the information preserved by setup.s to determine the current display
+ * Reads the information preserved by setup.ss to determine the current display
  * type and sets everything accordingly.
  */
 void con_init(void)

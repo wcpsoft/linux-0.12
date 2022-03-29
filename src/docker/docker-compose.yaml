@@ -9,7 +9,7 @@ services:
       - 6080:6080
     volumes:
       # 根据自己的代码路径配置，例如
-      - /home/ultraji/workplace/linux-0.12:/home/ubuntu/linux-0.12
+      - /Users/zhangruixiang/linux-0.12/:/home/ubuntu/linux-0.12
     tty: true
     stdin_open: true
     restart: unless-stopped 
