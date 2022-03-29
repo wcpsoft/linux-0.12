@@ -1,4 +1,6 @@
 .vscode
+.DS_Store
+.idea/
 
 linux-0.12/**/*.o
 linux-0.12/**/*.a
